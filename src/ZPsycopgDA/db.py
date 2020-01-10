@@ -1,21 +1,19 @@
 # ZPsycopgDA/db.py - query execution
 #
-# Copyright (C) 2004 Federico Di Gregorio <fog@initd.org>
+# Copyright (C) 2004-2010 Federico Di Gregorio  <fog@debian.org>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version.
+# psycopg2 is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# Or, at your option this program (ZPsycopgDA) can be distributed under the
-# Zope Public License (ZPL) Version 1.0, as published on the Zope web site,
-# http://www.zope.org/Resources/ZPL.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.
-#
-# See the LICENSE file for details.
+# psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+
+# Import modules needed by _psycopg to allow tools like py2exe to do
+# their work without bothering about the module dependencies.
 
 from Shared.DC.ZRDB.TM import TM
 from Shared.DC.ZRDB import dbi_db
@@ -171,15 +169,15 @@ class DB(TM, dbi_db.DB):
                         c.execute(qs)
                 except TransactionRollbackError:
                     # Ha, here we have to look like we are the ZODB raising conflict errrors, raising ZPublisher.Publish.Retry just doesn't work
-                    logging.debug("Serialization Error, retrying transaction", exc_info=True)
+                    #logging.debug("Serialization Error, retrying transaction", exc_info=True)
                     raise ConflictError("TransactionRollbackError from psycopg2")
                 except psycopg2.OperationalError:
-                    logging.exception("Operational error on connection, closing it.")
+                    #logging.exception("Operational error on connection, closing it.")
                     try:
                         # Only close our connection
                         self.putconn(True)
                     except:
-                        logging.debug("Something went wrong when we tried to close the pool", exc_info=True)
+                        #logging.debug("Something went wrong when we tried to close the pool", exc_info=True)
                         pass
                 if c.description is not None:
                     nselects += 1

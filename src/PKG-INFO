@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: psycopg2
-Version: 2.0.13
+Version: 2.0.14
 Summary: Python-PostgreSQL Database Adapter
 Home-page: http://initd.org/tracker/psycopg
 Author: Federico Di Gregorio
@@ -20,9 +20,9 @@ Description: psycopg is a PostgreSQL database adapter for the Python programming
         brave programmer.
         
 Platform: any
-Classifier: Development Status :: 4 - Beta
+Classifier: Development Status :: 5 - Production/Stable
 Classifier: Intended Audience :: Developers
-Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: License :: OSI Approved :: GNU Lesser General Public License (LGPL)
 Classifier: License :: OSI Approved :: Zope Public License
 Classifier: Programming Language :: Python
 Classifier: Programming Language :: C

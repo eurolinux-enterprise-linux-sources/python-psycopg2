@@ -1,22 +1,26 @@
 /* psycopgmodule.c - psycopg module (will import other C classes)
  *
- * Copyright (C) 2003 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2003-2010 Federico Di Gregorio <fog@debian.org>
  *
  * This file is part of psycopg.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2,
- * or (at your option) any later version.
+ * psycopg2 is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * In addition, as a special exception, the copyright holders give
+ * permission to link this program with the OpenSSL library (or with
+ * modified versions of OpenSSL that use the same license as OpenSSL),
+ * and distribute linked combinations including the two.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * You must obey the GNU Lesser General Public License in all respects for
+ * all of the code used other than OpenSSL.
+ *
+ * psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
  */
 
 #define PY_SSIZE_T_CLEAN
@@ -37,6 +41,7 @@
 #include "psycopg/adapter_binary.h"
 #include "psycopg/adapter_pboolean.h"
 #include "psycopg/adapter_pfloat.h"
+#include "psycopg/adapter_pdecimal.h"
 #include "psycopg/adapter_asis.h"
 #include "psycopg/adapter_list.h"
 #include "psycopg/typecast_binary.h"
@@ -212,7 +217,7 @@ psyco_connect(PyObject *self, PyObject *args, PyObject *keywds)
 #define psyco_register_type_doc \
 "register_type(obj, conn_or_curs) -> None -- register obj with psycopg type system\n\n" \
 ":Parameters:\n" \
-"  * `obj`: A type adapter created by `new_type()`" \
+"  * `obj`: A type adapter created by `new_type()`\n" \
 "  * `conn_or_curs`: A connection, cursor or None"
 
 #define typecast_from_python_doc \
@@ -272,6 +277,7 @@ static void
 psyco_adapters_init(PyObject *mod)
 {
     PyObject *call;
+    PyTypeObject *type;
 
     microprotocols_add(&PyFloat_Type, NULL, (PyObject*)&pfloatType);
     microprotocols_add(&PyInt_Type, NULL, (PyObject*)&asisType);
@@ -282,8 +288,9 @@ psyco_adapters_init(PyObject *mod)
     microprotocols_add(&PyUnicode_Type, NULL, (PyObject*)&qstringType);
     microprotocols_add(&PyBuffer_Type, NULL, (PyObject*)&binaryType);
     microprotocols_add(&PyList_Type, NULL, (PyObject*)&listType);
-    microprotocols_add((PyTypeObject*)psyco_GetDecimalType(),
-                       NULL, (PyObject*)&asisType);
+
+    if ((type = (PyTypeObject*)psyco_GetDecimalType()) != NULL)
+        microprotocols_add(type, NULL, (PyObject*)&pdecimalType);
 
     /* the module has already been initialized, so we can obtain the callable
        objects directly from its dictionary :) */
@@ -427,7 +434,7 @@ static struct {
         NotSupportedError_doc },
 #ifdef PSYCOPG_EXTENSIONS
     { "psycopg2.extensions.QueryCanceledError", &QueryCanceledError,
-      &OperationalError, OperationalError_doc },
+      &OperationalError, QueryCanceledError_doc },
     { "psycopg2.extensions.TransactionRollbackError",
       &TransactionRollbackError, &OperationalError,
       TransactionRollbackError_doc },
@@ -575,13 +582,13 @@ psyco_is_main_interp(void)
    the float type.
 
     If decimals are not to be used, return NULL.
-   */
+*/
 
 PyObject *
 psyco_GetDecimalType(void)
 {
-    PyObject *decimalType = NULL;
     static PyObject *cachedType = NULL;
+    PyObject *decimalType = NULL;
     PyObject *decimal;
 
     /* Use the cached object if running from the main interpreter. */
@@ -599,8 +606,7 @@ psyco_GetDecimalType(void)
     }
     else {
         PyErr_Clear();
-        decimalType = (PyObject *)&PyFloat_Type;
-        Py_INCREF(decimalType);
+        decimalType = NULL;
     }
 
     /* Store the object from future uses. */
@@ -633,6 +639,8 @@ static PyMethodDef psycopgMethods[] = {
     {"Boolean",  (PyCFunction)psyco_Boolean,
      METH_VARARGS, psyco_Float_doc},
     {"Float",  (PyCFunction)psyco_Float,
+     METH_VARARGS, psyco_Decimal_doc},
+    {"Decimal",  (PyCFunction)psyco_Decimal,
      METH_VARARGS, psyco_Boolean_doc},
     {"Binary",  (PyCFunction)psyco_Binary,
      METH_VARARGS, psyco_Binary_doc},
@@ -698,6 +706,7 @@ init_psycopg(void)
     isqlquoteType.ob_type  = &PyType_Type;
     pbooleanType.ob_type   = &PyType_Type;
     pfloatType.ob_type     = &PyType_Type;
+    pdecimalType.ob_type   = &PyType_Type;
     asisType.ob_type       = &PyType_Type;
     listType.ob_type       = &PyType_Type;
     chunkType.ob_type      = &PyType_Type;
@@ -710,6 +719,7 @@ init_psycopg(void)
     if (PyType_Ready(&isqlquoteType) == -1) return;
     if (PyType_Ready(&pbooleanType) == -1) return;
     if (PyType_Ready(&pfloatType) == -1) return;
+    if (PyType_Ready(&pdecimalType) == -1) return;
     if (PyType_Ready(&asisType) == -1) return;
     if (PyType_Ready(&listType) == -1) return;
     if (PyType_Ready(&chunkType) == -1) return;
@@ -811,6 +821,7 @@ init_psycopg(void)
     isqlquoteType.tp_alloc = PyType_GenericAlloc;
     pbooleanType.tp_alloc = PyType_GenericAlloc;
     pfloatType.tp_alloc = PyType_GenericAlloc;
+    pdecimalType.tp_alloc = PyType_GenericAlloc;
     connectionType.tp_alloc = PyType_GenericAlloc;
     asisType.tp_alloc = PyType_GenericAlloc;
     qstringType.tp_alloc = PyType_GenericAlloc;

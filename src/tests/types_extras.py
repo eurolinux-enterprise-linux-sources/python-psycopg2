@@ -1,17 +1,18 @@
 #!/usr/bin/env python
+#
 # types_extras.py - tests for extras types conversions
 #
-# Copyright (C) 2008 Federico Di Gregorio  <fog@debian.org>
+# Copyright (C) 2008-2010 Federico Di Gregorio  <fog@debian.org>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version.
+# psycopg2 is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
+# psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
 
 try:
     import decimal
@@ -77,6 +78,15 @@ class TypesExtrasTests(unittest.TestCase):
         # must survive NULL cast to inet
         s = self.execute("SELECT NULL::inet AS foo")
         self.failUnless(s is None)
+
+    def test_adapt_fail(self):
+        class Foo(object): pass
+        self.assertRaises(psycopg2.ProgrammingError,
+            psycopg2.extensions.adapt, Foo(), psycopg2.extensions.ISQLQuote, None)
+        try:
+            psycopg2.extensions.adapt(Foo(), psycopg2.extensions.ISQLQuote, None)
+        except psycopg2.ProgrammingError, err:
+            self.failUnless(str(err) == "can't adapt type 'Foo'")
 
 def test_suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

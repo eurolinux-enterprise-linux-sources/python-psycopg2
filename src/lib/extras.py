@@ -5,17 +5,25 @@ and classes untill a better place in the distribution is found.
 """
 # psycopg/extras.py - miscellaneous extra goodies for psycopg
 #
-# Copyright (C) 2003-2004 Federico Di Gregorio  <fog@debian.org>
+# Copyright (C) 2003-2010 Federico Di Gregorio  <fog@debian.org>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version.
+# psycopg2 is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
+# In addition, as a special exception, the copyright holders give
+# permission to link this program with the OpenSSL library (or with
+# modified versions of OpenSSL that use the same license as OpenSSL),
+# and distribute linked combinations including the two.
+#
+# You must obey the GNU Lesser General Public License in all respects for
+# all of the code used other than OpenSSL.
+#
+# psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
 
 import os
 import time
@@ -89,7 +97,7 @@ class DictCursorBase(_cursor):
         return res
 
 class DictConnection(_connection):
-    """A connection that uses DictCursor automatically."""
+    """A connection that uses `DictCursor` automatically."""
     def cursor(self, name=None):
         if name is None:
             return _connection.cursor(self, cursor_factory=DictCursor)
@@ -121,7 +129,7 @@ class DictCursor(DictCursorBase):
             self._query_executed = 0
 
 class DictRow(list):
-    """A row object that allow by-colun-name access to data."""
+    """A row object that allow by-colmun-name access to data."""
 
     __slots__ = ('_index',)
 
@@ -172,7 +180,7 @@ class DictRow(list):
         return self._index.__contains__(x)
 
 class RealDictConnection(_connection):
-    """A connection that uses RealDictCursor automatically."""
+    """A connection that uses `RealDictCursor` automatically."""
     def cursor(self, name=None):
         if name is None:
             return _connection.cursor(self, cursor_factory=RealDictCursor)
@@ -185,7 +193,7 @@ class RealDictCursor(DictCursorBase):
     Note that this cursor is extremely specialized and does not allow
     the normal access (using integer indices) to fetched data. If you need
     to access database rows both as a dictionary and a list, then use
-    the generic DictCursor instead of RealDictCursor.
+    the generic `DictCursor` instead of `!RealDictCursor`.
     """
 
     def __init__(self, *args, **kwargs):
@@ -210,6 +218,7 @@ class RealDictCursor(DictCursorBase):
             self._query_executed = 0
 
 class RealDictRow(dict):
+    """A ``dict`` subclass representing a data record."""
 
     __slots__ = ('_column_mapping')
 
@@ -224,13 +233,16 @@ class RealDictRow(dict):
 
 
 class LoggingConnection(_connection):
-    """A connection that logs all queries to a file or logger object."""
+    """A connection that logs all queries to a file or logger__ object.
+
+    .. __: http://docs.python.org/library/logging.html
+    """
 
     def initialize(self, logobj):
-        """Initialize the connection to log to `logobj`.
+        """Initialize the connection to log to ``logobj``.
 
-        The `logobj` parameter can be an open file object or a Logger instance
-        from the standard logging module.
+        The ``logobj`` parameter can be an open file object or a Logger
+        instance from the standard logging module.
         """
         self._logobj = logobj
         if logging and isinstance(logobj, logging.Logger):
@@ -286,12 +298,13 @@ class LoggingCursor(_cursor):
 class MinTimeLoggingConnection(LoggingConnection):
     """A connection that logs queries based on execution time.
     
-    This is just an example of how to sub-class LoggingConnection to provide
-    some extra filtering for the logged queries. Both the `.inizialize()` and
-    `.filter()` methods are overwritten to make sure that only queries
-    executing for more than `mintime` ms are logged.
+    This is just an example of how to sub-class `LoggingConnection` to
+    provide some extra filtering for the logged queries. Both the
+    `inizialize()` and `filter()` methods are overwritten to make sure
+    that only queries executing for more than ``mintime`` ms are logged.
     
-    Note that this connection uses the specialized cursor MinTimeLoggingCursor.
+    Note that this connection uses the specialized cursor
+    `MinTimeLoggingCursor`.
     """
     def initialize(self, logobj, mintime=0):
         LoggingConnection.initialize(self, logobj)
@@ -310,7 +323,7 @@ class MinTimeLoggingConnection(LoggingConnection):
             return _connection.cursor(self, name, cursor_factory=MinTimeLoggingCursor)
     
 class MinTimeLoggingCursor(LoggingCursor):
-    """The cursor sub-class companion to MinTimeLoggingConnection."""
+    """The cursor sub-class companion to `MinTimeLoggingConnection`."""
 
     def execute(self, query, vars=None, async=0):
         self.timestamp = time.time()
@@ -327,7 +340,11 @@ try:
     import uuid
 
     class UUID_adapter(object):
-        """Adapt Python's uuid.UUID type to PostgreSQL's uuid."""
+        """Adapt Python's uuid.UUID__ type to PostgreSQL's uuid__.
+
+        .. __: http://docs.python.org/library/uuid.html
+        .. __: http://www.postgresql.org/docs/8.4/static/datatype-uuid.html
+        """
         
         def __init__(self, uuid):
             self._uuid = uuid
@@ -391,13 +408,16 @@ class Inet(object):
     by passing an evil value to the initializer.
     """
     def __init__(self, addr):
-        self.addr
+        self.addr = addr
     
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.addr)
+
     def prepare(self, conn):
         self._conn = conn
     
     def getquoted(self):
-        obj = adapt(self.addr)
+        obj = _A(self.addr)
         if hasattr(obj, 'prepare'):
             obj.prepare(self._conn)
         return obj.getquoted()+"::inet"
@@ -411,6 +431,7 @@ def register_inet(oid=None, conn_or_curs=None):
     _ext.INET = _ext.new_type((oid, ), "INET",
             lambda data, cursor: data and Inet(data) or None)
     _ext.register_type(_ext.INET, conn_or_curs)
+    _ext.register_adapter(Inet, lambda x: x)
     return _ext.INET
 
 
@@ -432,7 +453,7 @@ def _convert_tstz_w_secs(s, cursor):
         return DATETIME(s[:-3], cursor)
 
 def register_tstz_w_secs(oids=None, conn_or_curs=None):
-    """Register alternate type caster for TIMESTAMP WITH TIME ZONE.
+    """Register alternate type caster for :sql:`TIMESTAMP WITH TIME ZONE`.
 
     The Python datetime module cannot handle time zones with
     seconds in the UTC offset. There are, however, historical
@@ -443,24 +464,24 @@ def register_tstz_w_secs(oids=None, conn_or_curs=None):
     timestamp you likely want to try this type caster. It truncates
     the seconds from the time zone data and retries casting
     the timestamp. Note that this will generate timestamps
-    which are INACCURATE by the number of seconds truncated
+    which are **inaccurate** by the number of seconds truncated
     (unless the seconds were 00).
 
-    <oids>
+    :param oids:
             which OIDs to use this type caster for,
-            defaults to TIMESTAMP WITH TIME ZONE
-    <conn_or_curs>
+            defaults to :sql:`TIMESTAMP WITH TIME ZONE`
+    :param conn_or_curs:
             a cursor or connection if you want to attach
             this type caster to that only, defaults to
-            None meaning all connections and cursors
+            ``None`` meaning all connections and cursors
     """
     if oids is None:
         oids = (1184,) # hardcoded from PostgreSQL headers
 
     _ext.TSTZ_W_SECS = _ext.new_type(oids, 'TSTZ_W_SECS', _convert_tstz_w_secs)
-    _ext.register_type(TSTZ_W_SECS, conn_or_curs)
+    _ext.register_type(_ext.TSTZ_W_SECS, conn_or_curs)
 
     return _ext.TSTZ_W_SECS
 
 
-__all__ = [ k for k in locals().keys() if not k.startswith('_') ]
+__all__ = filter(lambda k: not k.startswith('_'), locals().keys())

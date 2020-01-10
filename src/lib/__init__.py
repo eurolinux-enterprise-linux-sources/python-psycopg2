@@ -18,17 +18,25 @@ Homepage: http://initd.org/projects/psycopg2
 """
 # psycopg/__init__.py - initialization of the psycopg module
 #
-# Copyright (C) 2003-2004 Federico Di Gregorio  <fog@debian.org>
+# Copyright (C) 2003-2010 Federico Di Gregorio  <fog@debian.org>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version.
+# psycopg2 is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
+# In addition, as a special exception, the copyright holders give
+# permission to link this program with the OpenSSL library (or with
+# modified versions of OpenSSL that use the same license as OpenSSL),
+# and distribute linked combinations including the two.
+#
+# You must obey the GNU Lesser General Public License in all respects for
+# all of the code used other than OpenSSL.
+#
+# psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
 
 # Import modules needed by _psycopg to allow tools like py2exe to do
 # their work without bothering about the module dependencies.
@@ -52,8 +60,9 @@ if sys.version_info[0] >= 2 and sys.version_info[1] >= 4:
         warnings.warn(
             "can't import decimal module probably needed by _psycopg",
             RuntimeWarning)
-from psycopg2 import tz
 del sys, warnings
+
+from psycopg2 import tz
 
 # Import the DBAPI-2.0 stuff into top-level module.
 
@@ -69,4 +78,10 @@ from _psycopg import NotSupportedError, OperationalError
 from _psycopg import connect, apilevel, threadsafety, paramstyle
 from _psycopg import __version__
 
-__all__ = [ k for k in locals().keys() if not k.startswith('_') ]
+# Register default adapters.
+
+import psycopg2.extensions as _ext
+_ext.register_adapter(tuple, _ext.SQL_IN)
+
+__all__ = filter(lambda k: not k.startswith('_'), locals().keys())
+

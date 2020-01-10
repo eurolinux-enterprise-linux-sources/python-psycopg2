@@ -1,16 +1,16 @@
 # setup.py - distutils packaging
 #
-# Copyright (C) 2003-2004 Federico Di Gregorio  <fog@debian.org>
+# Copyright (C) 2003-2010 Federico Di Gregorio  <fog@debian.org>
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2, or (at your option) any later
-# version.
+# psycopg2 is free software: you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
+# psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
 
 """Python-PostgreSQL Database Adapter
 
@@ -28,9 +28,9 @@ brave programmer.
 """
 
 classifiers = """\
-Development Status :: 4 - Beta
+Development Status :: 5 - Production/Stable
 Intended Audience :: Developers
-License :: OSI Approved :: GNU General Public License (GPL)
+License :: OSI Approved :: GNU Lesser General Public License (LGPL)
 License :: OSI Approved :: Zope Public License
 Programming Language :: Python
 Programming Language :: C
@@ -55,16 +55,19 @@ from distutils.command.build_ext import build_ext
 from distutils.sysconfig import get_python_inc
 from distutils.ccompiler import get_default_compiler
 
-PSYCOPG_VERSION = '2.0.13'
+PSYCOPG_VERSION = '2.0.14'
 version_flags   = ['dt', 'dec']
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
 def get_pg_config(kind, pg_config="pg_config"):
-    p = subprocess.Popen([pg_config, "--" + kind],
-                         stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    try:
+      p = subprocess.Popen([pg_config, "--" + kind],
+                           stdin=subprocess.PIPE,
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+    except OSError:
+        raise Warning("Unable to find 'pg_config' file")
     p.stdin.close()
     r = p.stdout.readline().strip()
     if not r:
@@ -103,6 +106,8 @@ class psycopg_build_ext(build_ext):
         self.use_pg_dll = 1
         self.pgdir = None
         self.mx_include_dir = None
+        self.use_pydatetime = 1
+        self.have_ssl = have_ssl
 
         self.pg_config = self.autodetect_pg_config_path()
 
@@ -181,7 +186,7 @@ class psycopg_build_ext(build_ext):
                 if os.path.isfile(os.path.join(path, "ms", "libpq.lib")):
                     self.library_dirs.append(os.path.join(path, "ms"))
                     break
-            if have_ssl:
+            if self.have_ssl:
                 self.libraries.append("libeay32")
                 self.libraries.append("ssleay32")
                 self.libraries.append("user32")
@@ -216,7 +221,7 @@ class psycopg_build_ext(build_ext):
             except:
                 pgversion = "7.4.0"
 
-            verre = re.compile(r"(\d+)\.(\d+)(?:(?:\.(\d+))|(devel|(beta|rc)\d+))")
+            verre = re.compile(r"(\d+)\.(\d+)(?:(?:\.(\d+))|(devel|(alpha|beta|rc)\d+))")
             m = verre.match(pgversion)
             if m:
                 pgmajor, pgminor, pgpatch = m.group(1, 2, 3)
@@ -336,7 +341,8 @@ sources = [
     'connection_type.c', 'connection_int.c', 'cursor_type.c', 'cursor_int.c',
     'lobject_type.c', 'lobject_int.c',
     'adapter_qstring.c', 'adapter_pboolean.c', 'adapter_binary.c',
-    'adapter_asis.c', 'adapter_list.c', 'adapter_datetime.c', 'adapter_pfloat.c',
+    'adapter_asis.c', 'adapter_list.c', 'adapter_datetime.c',
+    'adapter_pfloat.c', 'adapter_pdecimal.c',
     'utils.c']
 
 parser = ConfigParser.ConfigParser()

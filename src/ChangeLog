@@ -1,3 +1,67 @@
+2010-03-13  Federico Di Gregorio  <fog@initd.org>
+
+	* Release 2.0.14.
+
+2010-03-11  Federico Di Gregorio  <fog@initd.org>
+
+	* setup.py: one-liner from Devrim GÜNDÜZ to build with PostgreSQL
+	alpha.
+
+2010-02-28  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapt_decimal.c: Python 2.4 decimal type does not support
+	.isfinite() and two different calls to ._isinfinity() and ._isnan() are
+	required. This fixes both a test failure and a segfault.
+
+2010-02-15  Federico Di Gregorio  <fog@initd.org>
+
+	* Added new Decimal adapter that correctly converts NaN and infinity
+	to PostgreSQL NaN numeric values. Also added tests.
+
+2010-02-15  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* lib/errorcodes.py: Updated to PostgreSQL 8.4; added lookup() function.
+
+2010-02-12  Daniele Varrazzo  <daniele.varrazzo@gmail.com>
+
+	* Stop the loop variable used to create __all__ leaking in the module.
+
+	* Fixed Inet constructor.
+
+	* Fixed docstring for 'QueryCanceledError' exception.
+
+2010-02-10  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/extensions.py: Binary was not imported from _psycopg; now it is
+
+	* lib/__init__: SQL_IN adapter is now automatically registered.
+
+	* ZPsycopgDA/db.py: removed logging debug calls; psycopg does
+	not depend on the logger module.
+
+2010-02-12  Federico Di Gregorio  <fog@initd.org>
+
+	* License migration: psycopg2 is now LGPL3 + OpenSSL exception.
+
+	* TODO file was never updated so lets remove it.
+
+2010-02-10  Federico Di Gregorio  <fog@initd.org>
+
+	* lib/extras.py: fixed register_tstz_w_secs() error as reported by
+	Karsten Hilbert.
+
+2009-11-25  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/microprotocols.c: "can't adapt" message now includes full
+	type information (adapted patch from Eric Chamberlain).
+
+	* tests/types_basic.py: fixed test broken by float precision fix.
+
+2009-11-09  Federico Di Gregorio  <fog@initd.org>
+
+	* psycopg/adapter_pfloat.c: applied patch from Remy Blankto fix float
+	loss of precision.
+
 2009-10-04  Federico Di Gregorio  <fog@initd.org>
 
 	* Release 2.0.13.

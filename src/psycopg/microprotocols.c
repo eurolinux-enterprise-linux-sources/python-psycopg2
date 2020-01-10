@@ -1,22 +1,26 @@
 /* microprotocols.c - minimalist and non-validating protocols implementation
  *
- * Copyright (C) 2003-2004 Federico Di Gregorio <fog@debian.org>
+ * Copyright (C) 2003-2010 Federico Di Gregorio <fog@debian.org>
  *
  * This file is part of psycopg.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2,
- * or (at your option) any later version.
+ * psycopg2 is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * In addition, as a special exception, the copyright holders give
+ * permission to link this program with the OpenSSL library (or with
+ * modified versions of OpenSSL that use the same license as OpenSSL),
+ * and distribute linked combinations including the two.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * You must obey the GNU Lesser General Public License in all respects for
+ * all of the code used other than OpenSSL.
+ *
+ * psycopg2 is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
  */
 
 #define PY_SSIZE_T_CLEAN
@@ -74,6 +78,7 @@ PyObject *
 microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
 {
     PyObject *adapter, *key;
+    char buffer[256];
 
     /* we don't check for exact type conformance as specified in PEP 246
        because the ISQLQuote type is abstract and there is no way to get a
@@ -114,7 +119,8 @@ microprotocols_adapt(PyObject *obj, PyObject *proto, PyObject *alt)
     }
 
     /* else set the right exception and return NULL */
-    psyco_set_error(ProgrammingError, NULL, "can't adapt", NULL, NULL);
+    PyOS_snprintf(buffer, 255, "can't adapt type '%s'", obj->ob_type->tp_name);
+    psyco_set_error(ProgrammingError, NULL, buffer, NULL, NULL);
     return NULL;
 }
 

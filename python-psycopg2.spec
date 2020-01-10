@@ -9,16 +9,17 @@
 
 Summary:	A PostgreSQL database adapter for Python
 Name:		python-psycopg2
-Version:	2.0.13
-Release:	2%{?dist}.1
+Version:	2.0.14
+Release:	1%{?dist}.1
 # The exceptions allow linking to OpenSSL and PostgreSQL's libpq
-License:	GPLv2+ with exceptions
+License:	GPLv3+ with exceptions
 Group:		Applications/Databases
-Url:		http://www.initd.org/software/initd/psycopg
+Url:		http://www.initd.org/psycopg/
 
-Source0:	http://initd.org/pub/software/psycopg/psycopg2-%{version}.tar.gz
+Source0:	http://initd.org/psycopg/tarballs/PSYCOPG-2-0/psycopg2-%{version}.tar.gz
 
 Patch1:		psycopg2-copy-refcount.patch
+Patch2:		psycopg2-mogrify-leak.patch
 
 BuildRequires:	python-devel postgresql-devel
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -55,6 +56,7 @@ database adapter.
 %setup -q -n psycopg2-%{version}
 
 %patch1 -p1
+%patch2 -p1
 
 %build
 python setup.py build
@@ -67,6 +69,9 @@ rm -Rf %{buildroot}
 mkdir -p %{buildroot}%{python_sitearch}/psycopg2
 python setup.py install --no-compile --root %{buildroot}
 
+# silence rpmlint warning about hidden files; we need not ship this, anyway
+rm -f doc/html/.buildinfo
+
 #install -d %{buildroot}%{ZPsycopgDAdir}
 #cp -pr ZPsycopgDA/* %{buildroot}%{ZPsycopgDAdir}
 
@@ -75,7 +80,7 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
-%doc AUTHORS ChangeLog INSTALL LICENSE README
+%doc AUTHORS ChangeLog LICENSE README
 %dir %{python_sitearch}/psycopg2
 %{python_sitearch}/psycopg2/*.py
 %{python_sitearch}/psycopg2/*.pyc
@@ -97,6 +102,12 @@ rm -rf %{buildroot}
 #%{ZPsycopgDAdir}/icons/*
 
 %changelog
+* Thu Feb  2 2012 Tom Lane <tgl@redhat.com> 2.0.14-1.el6_2.1
+- Update to 2.0.14 to get the last few upstream fixes in this release series,
+  and to not be behind what MRG has shipped for RHEL-5
+- Fix refcount leaks in _mogrify()
+Resolves: #787164
+
 * Mon Jul 11 2011 Tom Lane <tgl@redhat.com> 2.0.13-2.el6_1.1
 - Fix failure to increment the refcount on an object during COPY operations
 Resolves: #720306
