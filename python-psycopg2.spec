@@ -10,7 +10,7 @@
 Summary:	A PostgreSQL database adapter for Python
 Name:		python-psycopg2
 Version:	2.0.14
-Release:	1%{?dist}.1
+Release:	2%{?dist}
 # The exceptions allow linking to OpenSSL and PostgreSQL's libpq
 License:	GPLv3+ with exceptions
 Group:		Applications/Databases
@@ -20,6 +20,7 @@ Source0:	http://initd.org/psycopg/tarballs/PSYCOPG-2-0/psycopg2-%{version}.tar.g
 
 Patch1:		psycopg2-copy-refcount.patch
 Patch2:		psycopg2-mogrify-leak.patch
+Patch3:		psycopg2-gc.patch
 
 BuildRequires:	python-devel postgresql-devel
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -57,6 +58,7 @@ database adapter.
 
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
 
 %build
 python setup.py build
@@ -102,15 +104,19 @@ rm -rf %{buildroot}
 #%{ZPsycopgDAdir}/icons/*
 
 %changelog
-* Thu Feb  2 2012 Tom Lane <tgl@redhat.com> 2.0.14-1.el6_2.1
+* Fri Sep 14 2012 Tom Lane <tgl@redhat.com> 2.0.14-2
+- Fix reference-leak issues in typecast.c
+Resolves: #843723
+
+* Thu Feb  2 2012 Tom Lane <tgl@redhat.com> 2.0.14-1
 - Update to 2.0.14 to get the last few upstream fixes in this release series,
   and to not be behind what MRG has shipped for RHEL-5
 - Fix refcount leaks in _mogrify()
-Resolves: #787164
+Resolves: #765998
 
-* Mon Jul 11 2011 Tom Lane <tgl@redhat.com> 2.0.13-2.el6_1.1
+* Fri Jul  8 2011 Tom Lane <tgl@redhat.com> 2.0.13-3
 - Fix failure to increment the refcount on an object during COPY operations
-Resolves: #720306
+Resolves: #711095
 
 * Fri Jan 22 2010 Tom Lane <tgl@redhat.com> 2.0.13-2
 - Fix rpmlint complaints: remove unneeded explicit Requires:, use Conflicts:
