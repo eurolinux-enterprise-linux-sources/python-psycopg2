@@ -2,21 +2,26 @@
 %{expand: %%define pyver %(python -c 'import sys;print(sys.version[0:3])')}
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
+# Python 2.5+ is not supported by Zope, so it does not exist in
+# recent Fedora releases. That's why zope subpackage is disabled.
 #%define ZPsycopgDAdir %{_localstatedir}/lib/zope/Products/ZPsycopgDA
 
 
 Summary:	A PostgreSQL database adapter for Python
 Name:		python-psycopg2
 Version:	2.0.13
-Release:	2%{?dist}
-Source0:	http://initd.org/pub/software/psycopg/psycopg2-%{version}.tar.gz
+Release:	2%{?dist}.1
 # The exceptions allow linking to OpenSSL and PostgreSQL's libpq
 License:	GPLv2+ with exceptions
 Group:		Applications/Databases
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Url:		http://www.initd.org/software/initd/psycopg
 
+Source0:	http://initd.org/pub/software/psycopg/psycopg2-%{version}.tar.gz
+
+Patch1:		psycopg2-copy-refcount.patch
+
 BuildRequires:	python-devel postgresql-devel
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Conflicts:	python-psycopg2-zope < %{version}
 
@@ -48,6 +53,8 @@ database adapter.
 
 %prep
 %setup -q -n psycopg2-%{version}
+
+%patch1 -p1
 
 %build
 python setup.py build
@@ -90,6 +97,10 @@ rm -rf %{buildroot}
 #%{ZPsycopgDAdir}/icons/*
 
 %changelog
+* Mon Jul 11 2011 Tom Lane <tgl@redhat.com> 2.0.13-2.el6_1.1
+- Fix failure to increment the refcount on an object during COPY operations
+Resolves: #720306
+
 * Fri Jan 22 2010 Tom Lane <tgl@redhat.com> 2.0.13-2
 - Fix rpmlint complaints: remove unneeded explicit Requires:, use Conflicts:
   instead of bogus Obsoletes: to indicate lack of zope subpackage
